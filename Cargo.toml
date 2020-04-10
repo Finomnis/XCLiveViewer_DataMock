@@ -1,5 +1,5 @@
 [package]
-name = "xcliveviewer_datamock"
+name = "xc_mock"
 version = "0.1.0"
 authors = ["Finomnis <finomnis@gmail.com>"]
 edition = "2018"
@@ -7,3 +7,9 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+log = "0.4"
+env_logger = "0.7.1"
+tokio = { version = "0.2.17", features = ["full"] }
+tokio-tungstenite = "0.10.1"
+futures = "0.3.4"
+async-ctrlc = "1.0.0"
