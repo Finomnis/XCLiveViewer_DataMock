@@ -15,7 +15,9 @@ async fn wait_for_ctrl_c() -> Result<(), Box<dyn std::error::Error>> {
 
 #[tokio::main]
 async fn main() {
-    env_logger::Builder::new().filter_level(LevelFilter::Trace).init();
+    env_logger::Builder::new()
+        .filter_level(LevelFilter::Debug)
+        .init();
 
     let xc_mock = XCMock::new();
 
