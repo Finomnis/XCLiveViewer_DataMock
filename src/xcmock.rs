@@ -1,6 +1,7 @@
 use tokio;
 use tokio_tungstenite::accept_async;
 
+use tungstenite::Message;
 use log::*;
 use futures::StreamExt;
 
@@ -16,15 +17,17 @@ impl XCMockConnection {
     async fn run(self) -> Result<(), Box<dyn std::error::Error>>
     {
         let mut websocket = accept_async(self.socket).await?;
-        
+
         loop {
-            let msg = websocket.next().await;
-            match msg {
+            match websocket.next().await {
                 None => Err("Connection lost.")?,
                 Some(msg) => {
-                    let msg = msg?;
-                    //match msg {}
-                    info!("MSG: {:?}", msg);
+                    match msg? {
+                        Message::Text(text) => info!("Text: {}", text),
+                        Message::Binary(data) => info!("Binary: {:?}", data),
+                        Message::Ping(_) | Message::Pong(_) => (),
+                        Message::Close(_) => break,
+                    };
                 }
             }
         }
