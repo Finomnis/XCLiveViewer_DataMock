@@ -21,7 +21,7 @@ impl XCMockServer {
                 Ok((socket, addr)) => {
                     info!("Connected: {}", addr);
                     tokio::spawn(async move {
-                        match XCMockConnection::new().run(socket).await {
+                        match XCMockConnection::handle(socket).await {
                             Ok(()) => info!("Disconnected: {}", addr),
                             Err(e) => warn!("Connection error: {}: {}", addr, e),
                         }
