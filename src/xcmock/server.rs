@@ -1,6 +1,7 @@
 use log::*;
 
 use super::connection::XCMockConnection;
+use crate::utils::AsyncResult;
 
 use tokio;
 
@@ -12,7 +13,7 @@ impl XCMockServer {
         XCMockServer {}
     }
 
-    pub async fn run(self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn run(self) -> AsyncResult {
         let mut server = tokio::net::TcpListener::bind("127.0.0.1:8080").await?;
         loop {
             match server.accept().await

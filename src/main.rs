@@ -1,4 +1,5 @@
 mod xcmock;
+mod utils;
 
 use xcmock::{XCMockServer, XCMockDataGen};
 
@@ -6,7 +7,9 @@ use async_ctrlc::CtrlC;
 use std::process::exit;
 use log::*;
 
-async fn wait_for_ctrl_c() -> Result<(), Box<dyn std::error::Error>> {
+use crate::utils::AsyncResult;
+
+async fn wait_for_ctrl_c() -> AsyncResult {
     let ctrlc = CtrlC::new()?;
     ctrlc.await;
     info!("Stopping server ...");

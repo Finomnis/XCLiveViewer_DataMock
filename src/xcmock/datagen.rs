@@ -4,6 +4,7 @@ use tokio::sync::watch;
 use tokio::time;
 
 use std::time::Duration;
+use crate::utils::AsyncResult;
 
 pub struct XCMockDataGen {
     fight_infos_tx: watch::Sender<String>,
@@ -24,7 +25,7 @@ impl XCMockDataGen {
         self.fight_infos_rx.clone()
     }
 
-    pub async fn run(self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn run(self) -> AsyncResult {
         loop {
             time::delay_for(Duration::from_secs(1)).await;
             println!("Data: beep.");
