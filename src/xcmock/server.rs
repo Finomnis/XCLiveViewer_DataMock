@@ -1,8 +1,8 @@
+use log::*;
+
 use super::connection::XCMockConnection;
 
 use tokio;
-
-use log::*;
 
 
 pub struct XCMockServer {}
@@ -20,9 +20,8 @@ impl XCMockServer {
                 Err(e) => error!("ERROR: {}", e),
                 Ok((socket, addr)) => {
                     info!("Connected: {}", addr);
-                    let connection_handler = XCMockConnection::new(socket);
                     tokio::spawn(async move {
-                        match connection_handler.run().await {
+                        match XCMockConnection::new().run(socket).await {
                             Ok(()) => info!("Disconnected: {}", addr),
                             Err(e) => warn!("Connection error: {}: {}", addr, e),
                         }
