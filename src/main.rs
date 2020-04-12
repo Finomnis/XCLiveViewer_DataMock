@@ -1,6 +1,6 @@
 mod xcmock;
 
-use xcmock::XCMock;
+use xcmock::{XCMockServer, XCMockDataGen};
 
 use async_ctrlc::CtrlC;
 use std::process::exit;
@@ -19,7 +19,8 @@ async fn main() {
         .filter_level(LevelFilter::Debug)
         .init();
 
-    let xc_mock = XCMock::new();
+    let xc_server = XCMockServer::new();
+    let xc_data_gen = XCMockDataGen::new();
 
     // Combine server, data source and ctrl-c handler in one select.
     // Ctrl-C is the only future that can actually trigger.
@@ -27,7 +28,8 @@ async fn main() {
     // program gracefully.
     let result = tokio::select! {
         err = wait_for_ctrl_c() => err,
-        err = xc_mock.run() => err
+        err = xc_server.run() => err,
+        err = xc_data_gen.run() => err,
     };
 
     match result {
