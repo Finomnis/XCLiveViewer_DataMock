@@ -1,12 +1,14 @@
 use log::*;
 
 use tokio;
+use tokio::time;
 use tungstenite::Message;
 use tokio_tungstenite::accept_async;
 use futures::{StreamExt, SinkExt};
 use futures::stream::{SplitStream, SplitSink};
 use futures::channel::mpsc;
 use serde_json::json;
+use std::time::Duration;
 
 use crate::utils::{AsyncResult, Json};
 use crate::xcmock::XCMockDatabaseInterface;
@@ -42,9 +44,9 @@ impl XCMockConnection {
         ) = accept_async(socket).await?.split();
 
         tokio::select! {
-        err = connection.send_loop(websocket_out, send_queue_stream) => err,
-        err = connection.receive_loop(websocket_in) => err,
-        err = connection.flight_info_sender(flight_infos_enabled) => err,
+            err = connection.send_loop(websocket_out, send_queue_stream) => err,
+            err = connection.receive_loop(websocket_in) => err,
+            err = connection.flight_info_sender(flight_infos_enabled) => err,
         }
     }
 
@@ -93,11 +95,30 @@ impl XCMockConnection {
 
     async fn flight_info_sender(&self, mut flight_infos_enabled: mpsc::Receiver<bool>) -> AsyncResult<()> {
         let mut database_interface = self.database_interface.clone();
+        let mut enabled = false;
         loop {
-            let enabled = flight_infos_enabled
-                .next()
-                .await
-                .ok_or("Internal error in flight_info_sender.")?;
+            if enabled {
+                // If already enabled, wait for timer and listen to the enabled setting simultaneously
+                let enabled_changed = tokio::select! {
+                    // If setting changed, return new setting state and send an update.
+                    ret = flight_infos_enabled.next() => {
+                        Some(ret.ok_or("Lost connection to flight_infos_enabled setting.")?)
+                    }
+                    // If setting doesn't change, wait until it is time to send another update
+                    _ = time::delay_for(Duration::from_secs(55)) => None
+                };
+
+                if let Some(new_enabled_state) = enabled_changed {
+                    enabled = new_enabled_state;
+                }
+            } else {
+                // In not enabled, only listen to the enabled setting
+                enabled = flight_infos_enabled
+                    .next()
+                    .await
+                    .ok_or("Lost connection to flight_infos_enabled setting.")?;
+            }
+
             if enabled {
                 let flight_infos = database_interface.get_flight_infos().await?;
                 self.send("LiveFlightInfos", flight_infos).await?;
