@@ -39,13 +39,9 @@ impl XCMockDatabase {
 
     pub async fn run(mut self) -> AsyncResult<()> {
         loop {
-            match self.command_queue.next().await {
-                None => Err("All connections to the database closed!")?,
-                Some((callback, operation)) => {
-                    let op_result = self.execute_operation(operation).await?;
-                    callback.send(op_result).or(Err("Unable to submit operation result."))?
-                }
-            };
+            let (callback, operation) = self.command_queue.next().await.ok_or("All connections to the database closed!")?;
+            let op_result = self.execute_operation(operation).await?;
+            callback.send(op_result).or(Err("Unable to submit operation result."))?
         }
     }
 
