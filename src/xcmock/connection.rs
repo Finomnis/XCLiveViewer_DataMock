@@ -60,10 +60,43 @@ impl XCMockConnection {
         Ok(())
     }
 
+    async fn update_followed_flights(&self, contents: &Vec<Json>) -> AsyncResult<()> {
+        //TODO implement:
+        // - immediately send missing information
+        // - change subscribtion for future
+        // - somehow synchronize to prevent incorrect time order
+        info!("New subscription: {:?}", contents);
+        Ok(())
+    }
+
     /// Processes an incoming message.
-    async fn process_msg(&self, msg: String) -> AsyncResult<()> {
-        self.send("Echo", Json::String(msg)).await?;
-        self.set_flight_infos_enabled.clone().send(true).await?;
+    async fn process_msg(&self, msg_raw: String) -> AsyncResult<()> {
+        let msg = match serde_json::from_str(&msg_raw)? {
+            Json::Object(msg) => msg,
+            _ => Err("Invalid message: Message is not an object.")?
+        };
+
+        // Parse tag
+        let tag = match msg.get("tag").ok_or("Invalid message: Does not contain a tag.")? {
+            Json::String(tag) => tag as &str,
+            _ => Err("Invalid message: Tag is not a string.")?
+        };
+        debug!("Received message '{}'.", tag);
+
+        // React to message
+        match tag {
+            "WebFilterContest" => self.set_flight_infos_enabled.clone().send(true).await?,
+            "WebFilterArea" => (),
+            "WebFollow" => {
+                let contents = match msg.get("contents").ok_or("Invalid message: Does not contain contents.")? {
+                    Json::Array(contents) => contents,
+                    _ => Err("Invalid message: Contents is not an array.")?
+                };
+                self.update_followed_flights(contents).await?;
+            }
+            _ => warn!("Unknown message tag received: {}", tag)
+        }
+
         Ok(())
     }
 

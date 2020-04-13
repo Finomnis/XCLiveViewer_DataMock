@@ -29,7 +29,7 @@ impl XCMockServer {
                     tokio::spawn(async move {
                         match XCMockConnection::handle(socket, database_interface).await {
                             Ok(()) => info!("Disconnected: {}", addr),
-                            Err(e) => warn!("Connection error: {}: {}", addr, e),
+                            Err(e) => error!("Connection error: {}: {}", addr, e),
                         }
                     });
                 }

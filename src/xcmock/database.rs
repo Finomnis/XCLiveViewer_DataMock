@@ -45,9 +45,17 @@ impl XCMockDatabase {
         }
     }
 
+    async fn get_flight_infos(&mut self) -> AsyncResult<Json> {
+        // TODO implement
+        Ok(Json::Array(vec![]))
+    }
+
     async fn execute_operation(&mut self, operation: XCMockDatabaseOperation) -> AsyncResult<Json> {
         debug!("Executing database command: {:?}", operation);
-        Ok(Json::Null)
+        let result = match operation {
+            XCMockDatabaseOperation::GetFlightInfos => self.get_flight_infos().await?
+        };
+        Ok(result)
     }
 }
 
