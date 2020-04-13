@@ -1,7 +1,7 @@
 mod connection;
-mod datagen;
+mod database;
 mod server;
 
-pub use connection::XCMockConnection;
-pub use datagen::XCMockDataGen;
+pub use database::XCMockDatabase;
+pub use database::XCMockDatabaseInterface;
 pub use server::XCMockServer;
