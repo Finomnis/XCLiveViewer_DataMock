@@ -4,12 +4,17 @@ use crate::utils::{AsyncResult, Json};
 
 use futures::channel::{mpsc, oneshot};
 use futures::{StreamExt, SinkExt};
+use std::collections::HashMap;
+use crate::data::flight_id::{generate_flight_id, FlightId};
+use crate::data::flight_data::FlightData;
+use serde_json::to_value;
 
 type XCMockDatabaseCommand = (oneshot::Sender<Json>, XCMockDatabaseOperation);
 
 pub struct XCMockDatabase {
     command_queue_tx: mpsc::Sender<XCMockDatabaseCommand>,
     command_queue: mpsc::Receiver<XCMockDatabaseCommand>,
+    flights: HashMap<FlightId, FlightData>,
 }
 
 #[derive(Clone)]
@@ -25,9 +30,15 @@ enum XCMockDatabaseOperation {
 impl XCMockDatabase {
     pub fn new() -> XCMockDatabase {
         let (command_queue_tx, command_queue) = mpsc::channel(1);
+
+        // Todo remove
+        let mut flights = HashMap::new();
+        flights.insert(generate_flight_id(), FlightData::random());
+
         XCMockDatabase {
             command_queue_tx,
             command_queue,
+            flights,
         }
     }
 
@@ -45,15 +56,21 @@ impl XCMockDatabase {
         }
     }
 
-    async fn get_flight_infos(&mut self) -> AsyncResult<Json> {
-        // TODO implement
-        Ok(Json::Array(vec![]))
+    fn get_flight_infos(&mut self) -> AsyncResult<Json> {
+        let mut flight_infos = vec![];
+        for (flight_id, flight_data) in &self.flights {
+            flight_infos.push(Json::Array(vec![
+                Json::String(flight_id.clone()),
+                to_value(flight_data.to_json())?
+            ]));
+        }
+        Ok(Json::Array(flight_infos))
     }
 
     async fn execute_operation(&mut self, operation: XCMockDatabaseOperation) -> AsyncResult<Json> {
         debug!("Executing database command: {:?}", operation);
         let result = match operation {
-            XCMockDatabaseOperation::GetFlightInfos => self.get_flight_infos().await?
+            XCMockDatabaseOperation::GetFlightInfos => self.get_flight_infos()?
         };
         Ok(result)
     }

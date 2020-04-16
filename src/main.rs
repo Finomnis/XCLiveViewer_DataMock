@@ -1,5 +1,6 @@
 mod xcmock;
 mod utils;
+mod data;
 
 use crate::xcmock::{XCMockServer, XCMockDatabase};
 use crate::utils::AsyncResult;
